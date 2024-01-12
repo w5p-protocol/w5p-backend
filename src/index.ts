@@ -2,15 +2,21 @@ import express, { Request, Response } from "express";
 import dotenv from "dotenv";
 dotenv.config();
 import { Web5 } from "@web5/api";
+// node.js 18 and earlier,  needs globalThis.crypto polyfill
+import { webcrypto } from "node:crypto";
+// @ts-ignore
+if (!globalThis.crypto) globalThis.crypto = webcrypto;
 import cors from "cors"
 
 const { web5, did } = await Web5.connect(); 
 
 const app = express();
-const port = process.env.PORT || 5550;
+const port = process.env.PORT || 8080;
 
 // set cors headers
-app.use(cors())
+app.use(cors({
+    origin: "*"
+}))
 
 // remove all json null response value
 app.set('json replacer', (k:any, v:any) => (v === null ? undefined : v))
@@ -42,6 +48,7 @@ app.get('/api/explore', async (req:Request, res:Response) => {
             return res.json([])
         }
     } catch (error) {
+        console.log(error)
         return res.status(400).json({message: "error occured while fetching from dwn"})
     }
 });
@@ -67,6 +74,7 @@ app.post('/api/publish', async (req:Request, res:Response) => {
         resp.record?.send(did);
         return res.json(resp)
     } catch (error) {
+        console.log(error)
         return res.status(400).json({message: "error occured while saving to dwn"})
     }
 });
@@ -81,9 +89,20 @@ app.get('/api/protocol/delete/:id', async (req:Request, res:Response) => {
         })
         return res.json(resp.status);
     } catch (error) {
+        console.log(error)
         return res.status(400).json({message: "error occured while fetching from dwn"})
     }
 });
+
+app.get('/', (req:Request, res:Response) => {
+    console.log("Log ...")
+    return res.json('Working');
+})
+
+app.get('/api', (req:Request, res:Response) => {
+    console.log("Log ...")
+    return res.json('Working');
+})
 
 app.listen(port, () => {
     console.log(`App running on port :${port}`)
